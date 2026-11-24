@@ -1,0 +1,97 @@
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css')}}">
+</head>
+
+<body>
+    <div class="container">
+        <h2>Invoice Tracker</h2>
+
+        <p id="view_amount"></p>
+        <p id="view_status"></p>
+
+        <button class="btn" onclick="payInvoice()">Pay Invoice</button>
+        <button class="btn" onclick="resetInvoice()">Reset Invoice</button>
+        <button class="btn" onclick="getStatus()">Check Status</button>
+
+        <form action="/main" method="post">
+            <input type="submit" value="Main">
+        </form>
+
+        <script src="https://cdn.jsdelivr.net/npm/web3@1.5.2/dist/web3.min.js"></script>
+        <script>
+            // 1) paste the address of YOUR deployed InvoiceTracker here
+            const contractAddress = "0x3036bf739546850fc70f1035f6d97da7c394ac32";
+
+            const contractABI = [
+                {
+                    "inputs": [],
+                    "name": "invoiceAmount",
+                    "outputs": [
+                        {
+                            "internalType": "uint256",
+                            "name": "",
+                            "type": "uint256"
+                        }
+                    ],
+                    "stateMutability": "view",
+                    "type": "function"
+                },
+                {
+                    "inputs": [],
+                    "name": "isPaid",
+                    "outputs": [
+                        {
+                            "internalType": "bool",
+                            "name": "",
+                            "type": "bool"
+                        }
+                    ],
+                    "stateMutability": "view",
+                    "type": "function"
+                },
+                {
+                    "inputs": [],
+                    "name": "payInvoice",
+                    "outputs": [],
+                    "stateMutability": "nonpayable",
+                    "type": "function"
+                },
+                {
+                    "inputs": [],
+                    "name": "resetInvoice",
+                    "outputs": [],
+                    "stateMutability": "nonpayable",
+                    "type": "function"
+                }
+            ];
+
+            const web3 = new Web3(Web3.givenProvider);
+            const contract = new web3.eth.Contract(contractABI, contractAddress);
+
+            async function payInvoice() {
+                const accounts = await web3.eth.requestAccounts();
+                console.log(accounts[0]);
+                await contract.methods.payInvoice().send({from: accounts[0]});
+                await getStatus();
+            }
+
+            async function resetInvoice() {
+                const accounts = await web3.eth.requestAccounts();
+                console.log(accounts[0]);
+                await contract.methods.resetInvoice().send({from: accounts[0]});
+                await getStatus();
+            }
+
+            async function getStatus() {
+                const paid = await contract.methods.isPaid().call();
+                const amount = await contract.methods.invoiceAmount().call();
+                document.getElementById("view_amount").innerText = "Invoice Amount: " + amount;
+                document.getElementById("view_status").innerText = "Status: " + (paid ? "PAID" : "UNPAID");
+            }
+
+            // show the current status as soon as the page opens
+            getStatus();
+        </script>
+    </div>
+</body>
